@@ -17,32 +17,36 @@ function GoogleLoginButton() {
 
     const login = useGoogleLogin({
         scope: 'https://www.googleapis.com/auth/youtube',
-        onSuccess: tokenResponse => {
-            localStorage.setItem('youtube_access_token', tokenResponse.access_token);
+        // 1. КРИТИЧНО ВАЖЛИВО: Перемикаємо на Authorization Code Flow
+        flow: 'auth-code', 
+        
+        // 2. Тепер Google повертає об'єкт з КОДОМ (codeResponse), а не з токеном
+        onSuccess: codeResponse => { 
+            setStatusMessage('Отримано код від Google! Відправляємо на бекенд...');
 
-            setStatusMessage('Google авторизація успішна! Відправляємо токен на бекенд...');
-
-            setIsLoggedIn(true);
-
-            fetch('https://localhost:7197/api/googleauth/google-login', {
+            // Ми більше не зберігаємо токен одразу, бо ми його ще не маємо!
+            
+            fetch('https://localhost:7197/api/googleauth/callback', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    accessToken: tokenResponse.access_token
+                    // Відправляємо саме authCode, як того чекає C# бекенд
+                    authCode: codeResponse.code 
                 })
-
             })
-
-            .then (response => {
+            .then(response => {
                 if (!response.ok) throw new Error('Помилка запиту до бекенду');
                 return response.json();
             })
-            
-            .then (data => {
-                setStatusMessage(`Відповідь сервера: ${data.message}`);
+            .then(data => {
+                // 3. Тепер БЕКЕНД повернув нам access_token. 
+                // Ось тут ми його і зберігаємо в пам'ять браузера:
+                localStorage.setItem('youtube_access_token', data.access_token);
+                
+                setIsLoggedIn(true);
+                setStatusMessage('Авторизація повністю успішна!');
             })
-
-            .catch (error => {
+            .catch(error => {
                 console.error(error);
                 setStatusMessage('Не вдалося з\'єднатися з бекендом.');
             });
