@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 
 function GoogleLoginButton() {
@@ -6,9 +6,20 @@ function GoogleLoginButton() {
     const [statusMessage, setStatusMessage] = useState<string>('');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
+    useEffect(() => {
+        const savedToken = localStorage.getItem('youtube_access_token');
+        if (savedToken) {
+            setIsLoggedIn(true);
+            setStatusMessage('Ви успішно авторизовані (дані відновлено).');
+        }
+    }, [])
+
+
     const login = useGoogleLogin({
         scope: 'https://www.googleapis.com/auth/youtube',
         onSuccess: tokenResponse => {
+            localStorage.setItem('youtube_access_token', tokenResponse.access_token);
+
             setStatusMessage('Google авторизація успішна! Відправляємо токен на бекенд...');
 
             setIsLoggedIn(true);
