@@ -72,7 +72,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // 2. ВМИКАЄМО CORS (Критично важливо: викликати це ДО UseAuthorization)
-app.UseCors("AllowReact");
+app.UseCors("AllowReactApp");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
