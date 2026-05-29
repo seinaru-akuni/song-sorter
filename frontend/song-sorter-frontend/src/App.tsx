@@ -5,14 +5,17 @@ import { useGoogleLogin } from '@react-oauth/google';
 import GoogleLoginButton from './components/GoogleLoginButton';
 import PlaylistsList from './components/PlaylistsList';
 
+import RegisterForm from './components/RegisterForm';
+import LoginForm from './components/LoginForm';
+
 function App() {
   
   
 
   return (
     <div>
-      <GoogleLoginButton />
-      <PlaylistsList />
+      <RegisterForm />
+      <LoginForm />
     </div>
   )
 }
