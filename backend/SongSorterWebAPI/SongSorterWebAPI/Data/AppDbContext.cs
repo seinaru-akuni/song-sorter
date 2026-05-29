@@ -10,6 +10,6 @@ namespace SongSorterWebAPI.Data
         }
 
         // Ця властивість перетвориться на таблицю "Users" у SQL Server
-        public DbSet<GoogleUser> GoogleUsers { get; set; }  
+        public DbSet<LinkedAccount> GoogleUsers { get; set; }  
     }
 }
