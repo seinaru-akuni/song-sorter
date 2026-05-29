@@ -1,19 +1,47 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SongSorterWebAPI.Data;
 using SongSorterWebAPI.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. ДОДАЄМО СЕРВІС CORS (Вказуємо порт нашого React-додатка)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReact", policy =>
+
+var jwtSecret = builder.Configuration["JwtSettings:SecretKey"];
+
+// 2. Додаємо систему аутентифікації
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        policy.WithOrigins("http://localhost:5173") // Стандартний порт Vite
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        // Налаштовуємо правила перевірки токена
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false, // Для локальної розробки не перевіряємо видавця
+            ValidateAudience = false, // Для локальної розробки не перевіряємо отримувача
+            ValidateLifetime = true,  // Токен має "протухати" з часом
+            ValidateIssuerSigningKey = true, // Обов'язкова перевірка нашого підпису
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret!))
+        };
+
+        // 3. НАЙГОЛОВНІШЕ: Вчимо сервер шукати токен у кукі
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // Якщо браузер надіслав куку з назвою "jwt_token"
+                if (context.Request.Cookies.ContainsKey("jwt_token"))
+                {
+                    // Беремо токен з неї
+                    context.Token = context.Request.Cookies["jwt_token"];
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
-});
+
+
+
 
 // Add services to the container.
 
@@ -51,6 +79,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
