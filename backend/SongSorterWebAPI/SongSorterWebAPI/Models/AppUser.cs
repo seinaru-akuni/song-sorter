@@ -4,6 +4,8 @@
     {
         public int Id { get; set; }
 
+        public string Username {  get; set; }
+
         // Головна електронна пошта для входу на твій сайт
         public required string Email { get; set; }
 
