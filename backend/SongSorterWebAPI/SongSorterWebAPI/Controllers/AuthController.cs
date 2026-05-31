@@ -18,6 +18,7 @@ namespace SongSorterWebAPI.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IJwtService _jwtService;
+        private readonly IUserService _userService;
 
         // Створюємо екземпляр хешера паролів
         private readonly PasswordHasher<AppUser> _passwordHasher = new();
@@ -39,10 +40,10 @@ namespace SongSorterWebAPI.Controllers
                 return BadRequest("Паролі не співпадають.");
 
             // Перевіряємо, чи не зайнята вже пошта або юзернейм
-            if (await _context.AppUsers.AnyAsync(u => u.Email == request.Email))
+            if (await _userService.IsEmailTakenAsync(request.Email))
                 return BadRequest("Користувач з таким Email вже існує.");
 
-            if (await _context.AppUsers.AnyAsync(u => u.Username == request.Username))
+            if (await _userService.IsUsernameTakenAsync(request.Username))
                 return BadRequest("Цей Username вже зайнятий.");
 
             // Створюємо нового користувача
@@ -55,8 +56,8 @@ namespace SongSorterWebAPI.Controllers
             // Хешуємо пароль (PasswordHasher автоматично генерує сіль)
             newUser.PasswordHash = _passwordHasher.HashPassword(newUser, request.Password);
 
-            _context.AppUsers.Add(newUser);
-            await _context.SaveChangesAsync();
+            _userService.AddNewAppUser(newUser);
+            await _userService.ContextSaveChangesAsync();
 
             // Відразу після реєстрації генеруємо сесію (логінимо користувача)
             _jwtService.GenerateAndSetTokenCookie(newUser.Id, HttpContext);
