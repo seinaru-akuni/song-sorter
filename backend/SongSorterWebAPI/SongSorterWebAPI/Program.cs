@@ -56,6 +56,7 @@ builder.Services.AddDataProtection();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ITokenProtectionService, TokenProtectionService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddCors(options =>
 {
