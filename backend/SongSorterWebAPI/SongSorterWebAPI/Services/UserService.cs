@@ -37,5 +37,15 @@ namespace SongSorterWebAPI.Services
         {
             return await _context.SaveChangesAsync();
         }
+
+        public async Task<AppUser?> FindUserViaEmailAsync(string email)
+        {
+            return _context.AppUsers.FirstOrDefault(u => u.Email == email);
+        }
+
+        public async Task<AppUser?> FindUserViaIdAsync(int id)
+        {
+            return _context.AppUsers.FirstOrDefault(u => u.Id == id);
+        }
     }
 }
