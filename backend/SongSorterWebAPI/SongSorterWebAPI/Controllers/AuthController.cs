@@ -16,17 +16,16 @@ namespace SongSorterWebAPI.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly AppDbContext _context;
         private readonly IJwtService _jwtService;
         private readonly IUserService _userService;
 
         // Створюємо екземпляр хешера паролів
         private readonly PasswordHasher<AppUser> _passwordHasher = new();
 
-        public AuthController(AppDbContext context, IJwtService jwtService)
+        public AuthController(IJwtService jwtService, IUserService userService)
         {
-            _context = context;
             _jwtService = jwtService;
+            _userService = userService;
         }
 
         // ==========================================
@@ -72,7 +71,7 @@ namespace SongSorterWebAPI.Controllers
         public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
             // Шукаємо користувача за Email
-            var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var user = await _userService.FindUserViaEmailAsync(request.Email);
 
             if (user == null || string.IsNullOrEmpty(user.PasswordHash))
                 return Unauthorized("Невірний Email або пароль.");
@@ -106,9 +105,7 @@ namespace SongSorterWebAPI.Controllers
             }
 
             // Йдемо в базу і дістаємо профіль + інформацію про його підключення
-            var user = await _context.AppUsers
-                .Include(u => u.LinkedAccounts) // Підтягуємо таблицю підключень
-                .FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _userService.FindUserViaIdAsync(userId);
 
             if (user == null)
             {
@@ -121,8 +118,6 @@ namespace SongSorterWebAPI.Controllers
             {
                 id = user.Id,
                 email = user.Email,
-                // Показуємо фронтенду, які сервіси вже підключені (наприклад: ["Google", "Spotify"])
-                connectedServices = user.LinkedAccounts.Select(la => la.ProviderName).ToList()
             });
         }
 
