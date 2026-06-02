@@ -1,16 +1,9 @@
-import { useEffect, useState } from 'react'
-import './App.css'
-import { useGoogleLogin } from '@react-oauth/google';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 
-import GoogleLoginButton from './components/GoogleLoginButton';
-import PlaylistsList from './components/PlaylistsList';
-
-import RegisterForm from './components/RegisterForm';
-import LoginForm from './components/LoginForm';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+
 
 function App() {
   
@@ -38,6 +31,7 @@ function App() {
                 <Route path="/register" element={<RegisterPage />} />
             </Routes>
         </BrowserRouter>
+        
     </div>
   )
 }
