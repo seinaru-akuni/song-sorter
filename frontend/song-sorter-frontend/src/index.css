@@ -2,6 +2,19 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+    --color-main-light: #FDF6E3;
+    --color-main-dark: #1A202C;
+    --color-custom-green: #209D50;
+}
+
 html, body, #root{
     height: 100%;
+    background-color: var(--color-main-light);
+}
+
+.dark html,
+.dark body,
+.dark #root {
+    background-color: var(--color-main-dark);
 }
