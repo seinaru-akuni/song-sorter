@@ -5,7 +5,7 @@ import TransparentButton from './ui/TransparentButton';
 
 export default function Navbar() {
 return (
-    <nav className="border-b border-gray-300 text-gray-900 transition-colors duration-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+    <nav className="bg-white border-b border-gray-300 text-gray-900 transition-colors duration-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
     {/* Контейнер із відступами та вертикальним вирівнюванням */}
     <div className="mx-auto flex max-w-7xl items-center justify-between px-[clamp(10px,5vw,20px)] py-3">
         
@@ -21,13 +21,13 @@ return (
         {/* Права частина: Перемикач теми */}
         <div className="flex items-center gap-4 text-sm font-medium">
             
-                <Link to="/login" className="p-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
-                Вхід
-                </Link>
+            <Link to="/login" className="p-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+            Login
+            </Link>
             
             
             <Link to="/register" className="bg-custom-green text-white px-4 py-2 rounded hover:bg-green-700 transition-colors cursor-pointer">
-                Реєстрація
+                Register
             </Link>
             
             <ThemeToggle />
