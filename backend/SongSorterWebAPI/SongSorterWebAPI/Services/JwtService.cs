@@ -46,8 +46,13 @@ namespace SongSorterWebAPI.Services
             {
                 HttpOnly = true, // Забороняє доступ до куки з JavaScript (захист від XSS-атак)
                 Secure = true,   // Вимагає HTTPS (на localhost працює нормально)
-                SameSite = SameSiteMode.Strict, // Захист від CSRF-атак (кука не відправляється з інших сайтів)
+                SameSite = SameSiteMode.None, // Захист від CSRF-атак (кука не відправляється з інших сайтів)
             };
+
+            if (rememberMe)
+            {
+                cookieOptions.Expires = DateTime.UtcNow.AddDays(30);
+            }
 
             // Додаємо куку до відповіді сервера. 
             // Назва "jwt_token" має точно співпадати з тією, що ми вказали в Program.cs
