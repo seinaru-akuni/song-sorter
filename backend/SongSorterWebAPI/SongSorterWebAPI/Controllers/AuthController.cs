@@ -59,7 +59,7 @@ namespace SongSorterWebAPI.Controllers
             await _userService.ContextSaveChangesAsync();
 
             // Відразу після реєстрації генеруємо сесію (логінимо користувача)
-            _jwtService.GenerateAndSetTokenCookie(newUser.Id, HttpContext, false);
+            _jwtService.GenerateAndSetTokenCookie(newUser.Id, HttpContext);
 
             return Ok(new { message = "Реєстрація успішна!" });
         }
@@ -83,7 +83,7 @@ namespace SongSorterWebAPI.Controllers
                 return Unauthorized("Невірний Email або пароль.");
 
             // Якщо пароль підходить, видаємо безпечну куку
-            _jwtService.GenerateAndSetTokenCookie(user.Id, HttpContext, request.RememberMe);
+            _jwtService.GenerateAndSetTokenCookie(user.Id, HttpContext);
 
             return Ok(new { message = "Вхід успішний!" });
         }
@@ -118,7 +118,6 @@ namespace SongSorterWebAPI.Controllers
             {
                 id = user.Id,
                 email = user.Email,
-                username = user.Username
             });
         }
 
