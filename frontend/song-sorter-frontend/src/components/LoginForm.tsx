@@ -16,7 +16,7 @@ function LoginForm() {
         setError('');
 
         try {
-            const result = await authService.login({ email, password });
+            const result = await authService.login({ email, password, rememberMe });
             setMessage(result.message || 'Вхід успішний! Перевірте кукі.');
         } catch (err: any) {
             setError(err.message);
