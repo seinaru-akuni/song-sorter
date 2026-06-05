@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import ThemeToggle from './ui/ThemeToggle';
 import GreenButton from './ui/GreenButton';
 import TransparentButton from './ui/TransparentButton';
-import { LogoutButton } from './ui/LogoutButton';
 
 export default function Navbar() {
 return (
@@ -32,8 +31,6 @@ return (
             </Link>
             
             <ThemeToggle />
-
-            <LogoutButton />
         </div>
     </div>
     </nav>
