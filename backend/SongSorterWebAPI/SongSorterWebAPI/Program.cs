@@ -54,6 +54,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddDataProtection();
 
+builder.Services.AddScoped<IEmaleService, EmailService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ITokenProtectionService, TokenProtectionService>();
 builder.Services.AddScoped<IUserService, UserService>();
