@@ -55,6 +55,21 @@ export const authService = {
         return response.json();
     },
 
+    verifyEmail: async (email: string, code: string) => {
+        const response = await fetch(`${API_BASE_URL}/verify-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // Важливо, бо сервер поверне куку!
+            body: JSON.stringify({ email, code })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Помилка перевірки коду');
+        }
+        return response.json();
+    },
+
     // Перевірка поточної сесії (виклик при кожному оновленні сторінки F5)
     getMe: async (): Promise<UserProfile> => {
         const response = await fetch(`${API_BASE_URL}/me`, {
