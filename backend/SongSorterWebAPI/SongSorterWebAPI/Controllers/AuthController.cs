@@ -18,14 +18,16 @@ namespace SongSorterWebAPI.Controllers
     {
         private readonly IJwtService _jwtService;
         private readonly IUserService _userService;
+        private readonly IEmailService _emailService;
 
         // Створюємо екземпляр хешера паролів
         private readonly PasswordHasher<AppUser> _passwordHasher = new();
 
-        public AuthController(IJwtService jwtService, IUserService userService)
+        public AuthController(IJwtService jwtService, IUserService userService, IEmailService emailService)
         {
             _jwtService = jwtService;
             _userService = userService;
+            _emailService = emailService;
         }
 
         // ==========================================
@@ -45,11 +47,16 @@ namespace SongSorterWebAPI.Controllers
             if (await _userService.IsUsernameTakenAsync(request.Username))
                 return BadRequest("Цей Username вже зайнятий.");
 
+            string verificationCode = Random.Shared.Next(0, 1000000).ToString("D6");
+
             // Створюємо нового користувача
             var newUser = new AppUser
             {
                 Email = request.Email,
-                Username = request.Username
+                Username = request.Username,
+                IsEmailVerified = false,
+                VerificationCode = verificationCode,
+                VerificationCodeExpiry = DateTime.UtcNow.AddMinutes(15)
             };
 
             // Хешуємо пароль (PasswordHasher автоматично генерує сіль)
@@ -58,10 +65,42 @@ namespace SongSorterWebAPI.Controllers
             _userService.AddNewAppUser(newUser);
             await _userService.ContextSaveChangesAsync();
 
+            
+
+
             // Відразу після реєстрації генеруємо сесію (логінимо користувача)
             _jwtService.GenerateAndSetTokenCookie(newUser.Id, HttpContext, false);
 
             return Ok(new { message = "Реєстрація успішна!" });
+        }
+
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto request)
+        {
+            var user = await _userService.FindUserViaEmailAsync(request.Email);
+
+            if (user == null)
+                return NotFound("Користувача не знайдено.");
+
+            if (user.IsEmailVerified)
+                return BadRequest("Пошта вже підтверджена.");
+
+            if (user.VerificationCode != request.Code)
+                return BadRequest("Невірний код.");
+
+            if (user.VerificationCodeExpiry < DateTime.UtcNow)
+                return BadRequest("Термін дії коду минув. Зареєструйтеся знову або запросіть новий код.");
+
+            // Якщо все ок — підтверджуємо пошту і зачищаємо код
+            user.IsEmailVerified = true;
+            user.VerificationCode = null;
+            user.VerificationCodeExpiry = null;
+            await _userService.ContextSaveChangesAsync();
+
+            // І ТІЛЬКИ ТЕПЕР видаємо сесійну куку (оскільки це відразу після реєстрації, rememberMe = false)
+            _jwtService.GenerateAndSetTokenCookie(user.Id, HttpContext, false);
+
+            return Ok(new { message = "Пошту успішно підтверджено! Ви увійшли в систему." });
         }
 
         // ==========================================
