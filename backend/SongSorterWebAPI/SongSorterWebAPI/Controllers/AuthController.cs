@@ -128,9 +128,18 @@ namespace SongSorterWebAPI.Controllers
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            // Щоб розлогінити користувача, нам достатньо просто наказати його 
-            // браузеру видалити нашу безпечну куку
-            Response.Cookies.Delete("jwt_token");
+            // Створюємо такі самі правила, які використовували при генерації
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                // Важливо: тут має бути той самий SameSiteMode, який ти залишив у JwtService 
+                // (Strict, якщо ти налаштував Proxy, або None, якщо використовуєш різні порти)
+                SameSite = SameSiteMode.Strict
+            };
+
+            // Видаляємо куку, вказуючи ці правила
+            Response.Cookies.Delete("jwt_token", cookieOptions);
 
             return Ok(new { message = "Успішний вихід із системи" });
         }

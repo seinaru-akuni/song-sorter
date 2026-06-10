@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '/akuni/PetProjects/song-sorter-repo/song-sorter/frontend/song-sorter-frontend/src/services/authService'; // Перевір шлях
+import { authService } from '../../services/authService'; // Перевір шлях
 
 export const LogoutButton = () => {
     const navigate = useNavigate();
