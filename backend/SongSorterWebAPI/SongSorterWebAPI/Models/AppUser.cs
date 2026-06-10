@@ -11,9 +11,9 @@
 
         // Пароль для майбутньої локальної реєстрації (поки що буде NULL)
         public string? PasswordHash { get; set; }
-
-        // Навігаційна властивість для EF Core: 
-        // Вказує, що у цього користувача може бути багато підключених інтеграцій
+        public bool IsEmailVerified { get; set; } = false;
+        public string? VerificationCode { get; set; }
+        public DateTime? VerificationCodeExpiry { get; set; }
         public List<LinkedAccount> LinkedAccounts { get; set; } = new();
     }
 }
