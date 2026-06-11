@@ -45,7 +45,7 @@ function LoginForm() {
                         Remember me
                     </label>
 
-                    <Link to="/register" className="text-blue-500 hover:underline">
+                    <Link to="/change-password" className="text-blue-500 hover:underline">
                         Forgot password?
                     </Link>
                 </div>
