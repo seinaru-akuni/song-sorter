@@ -67,9 +67,6 @@ namespace SongSorterWebAPI.Controllers
             _userService.AddNewAppUser(newUser);
             await _userService.ContextSaveChangesAsync();
 
-            
-
-
             // Відразу після реєстрації генеруємо сесію (логінимо користувача)
             _jwtService.GenerateAndSetTokenCookie(newUser.Id, HttpContext, false);
 
@@ -113,6 +110,7 @@ namespace SongSorterWebAPI.Controllers
         public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto request)
         {
             var user = await _userService.FindUserViaEmailAsync(request.Email);
+
 
             if (user == null)
                 return NotFound("Користувача не знайдено.");
@@ -180,7 +178,33 @@ namespace SongSorterWebAPI.Controllers
 
 
         // ==========================================
-        // 5. ВИХІД З АКАУНТУ (LOGOUT)
+        // 5. ЗМІНИТИ ПАРОЛЬ
+        // ==========================================
+
+
+        [HttpPut("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ChangePassword([FromBody] ResetPasswordDto request)
+        {
+            var user = await _userService.FindUserViaEmailAsync(request.Email);
+
+            if (user == null)
+                return NotFound();
+
+            if (request.NewPassword != request.ConfirmNewPassword)
+                return BadRequest("Паролі не співпадають.");
+
+            string verificationCode = Random.Shared.Next(0, 1000000).ToString("D6");
+
+            user.VerificationCode = verificationCode;
+            user.VerificationCodeExpiry = DateTime.UtcNow.AddMinutes(15);
+
+            return Ok(new { message = "Пароль успішно змінено" });
+        }
+
+
+        // ==========================================
+        // 6. ВИХІД З АКАУНТУ (LOGOUT)
         // ==========================================
 
 
