@@ -33,6 +33,8 @@ namespace SongSorterWebAPI.Controllers
         // ==========================================
         // 1. РЕЄСТРАЦІЯ
         // ==========================================
+
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto request)
         {
@@ -74,6 +76,39 @@ namespace SongSorterWebAPI.Controllers
             return Ok(new { message = "Реєстрація успішна!" });
         }
 
+
+        // ==========================================
+        // 2. ЛОГІН (ВХІД)
+        // ==========================================
+
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto request)
+        {
+            // Шукаємо користувача за Email
+            var user = await _userService.FindUserViaEmailAsync(request.Email);
+
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
+                return Unauthorized("Невірний Email або пароль.");
+
+            // Перевіряємо хеш пароля
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+
+            if (result == PasswordVerificationResult.Failed)
+                return Unauthorized("Невірний Email або пароль.");
+
+            // Якщо пароль підходить, видаємо безпечну куку
+            _jwtService.GenerateAndSetTokenCookie(user.Id, HttpContext, request.RememberMe);
+
+            return Ok(new { message = "Вхід успішний!" });
+        }
+
+
+        // ==========================================
+        // 3. ВЕРИФІКААЦІЯ ЕМЕЙЛУ
+        // ==========================================
+
+
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto request)
         {
@@ -103,33 +138,14 @@ namespace SongSorterWebAPI.Controllers
             return Ok(new { message = "Пошту успішно підтверджено! Ви увійшли в систему." });
         }
 
-        // ==========================================
-        // 2. ЛОГІН (ВХІД)
-        // ==========================================
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto request)
-        {
-            // Шукаємо користувача за Email
-            var user = await _userService.FindUserViaEmailAsync(request.Email);
 
-            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
-                return Unauthorized("Невірний Email або пароль.");
-
-            // Перевіряємо хеш пароля
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
-
-            if (result == PasswordVerificationResult.Failed)
-                return Unauthorized("Невірний Email або пароль.");
-
-            // Якщо пароль підходить, видаємо безпечну куку
-            _jwtService.GenerateAndSetTokenCookie(user.Id, HttpContext, request.RememberMe);
-
-            return Ok(new { message = "Вхід успішний!" });
-        }
 
         // ==========================================
-        // 1. ПЕРЕВІРКА СЕСІЇ ТА ОТРИМАННЯ ДАНИХ (Для React)
+        // 4. ПЕРЕВІРКА СЕСІЇ ТА ОТРИМАННЯ ДАНИХ (Для React)
         // ==========================================
+
+
+
         [HttpGet("me")]
         [Authorize] // <--- Цей атрибут блокує запит, якщо куки немає або вона протухла!
         public async Task<IActionResult> GetCurrentUser()
@@ -161,9 +177,14 @@ namespace SongSorterWebAPI.Controllers
             });
         }
 
+
+
         // ==========================================
-        // 2. ВИХІД З АКАУНТУ (LOGOUT)
+        // 5. ВИХІД З АКАУНТУ (LOGOUT)
         // ==========================================
+
+
+
         [HttpPost("logout")]
         public IActionResult Logout()
         {
@@ -172,8 +193,6 @@ namespace SongSorterWebAPI.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                // Важливо: тут має бути той самий SameSiteMode, який ти залишив у JwtService 
-                // (Strict, якщо ти налаштував Proxy, або None, якщо використовуєш різні порти)
                 SameSite = SameSiteMode.Strict
             };
 
