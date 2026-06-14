@@ -55,12 +55,21 @@ export const authService = {
         return response.json();
     },
 
-    verifyEmail: async (email: string, code: string) => {
+    verifyEmail: async (email: string, code: string, newPassword?: string, confirmNewPassword?: string) => {
+        
+        // Формуємо об'єкт (якщо паролів немає, вони будуть undefined, і JSON.stringify їх просто проігнорує або передасть порожніми, що нас цілком влаштовує)
+        const requestBody = { 
+            email, 
+            code, 
+            newPassword: newPassword || "", 
+            confirmNewPassword: confirmNewPassword || "" 
+        };
+
         const response = await fetch(`${API_BASE_URL}/verify-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include', // Важливо, бо сервер поверне куку!
-            body: JSON.stringify({ email, code })
+            credentials: 'include',
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
@@ -80,6 +89,20 @@ export const authService = {
 
         if (!response.ok) {
             throw new Error('Не авторизовано');
+        }
+        return response.json();
+    },
+
+    forgotPassword: async (email: string) => {
+        const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Помилка при відновленні пароля');
         }
         return response.json();
     },
