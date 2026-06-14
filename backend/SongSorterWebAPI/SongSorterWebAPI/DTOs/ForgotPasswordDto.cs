@@ -1,6 +1,6 @@
 ﻿namespace SongSorterWebAPI.DTOs
 {
-    public class ResetPasswordDto
+    public class ForgotPasswordDto
     {
         public string Email {  get; set; }
     }
