@@ -4,16 +4,17 @@ import { useNavigate } from 'react-router-dom';
 
 interface EmailVerificationFormProps {
     email: string;
-    code: string;
     navigateTo?: string;
+    newPassword?: string;
+    confirmNewPassword?: string;
 }
 
-export default function EmailVerificationForm({ email, code, navigateTo = '/' }: EmailVerificationFormProps) {
+export default function EmailVerificationForm({ email, navigateTo = '/', newPassword, confirmNewPassword }: EmailVerificationFormProps) {
 
     const navigate = useNavigate();
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
-    const [verificationCode, setVerificationCode] = useState(code || '');
+    const [verificationCode, setVerificationCode] = useState('');
 
 
     const handleVerificationSubmit = async (e: React.FormEvent) => {
@@ -21,7 +22,11 @@ export default function EmailVerificationForm({ email, code, navigateTo = '/' }:
         setError('');
         setMessage('');
         try {
-            await authService.verifyEmail(email, verificationCode);
+            if (newPassword && confirmNewPassword) {
+                await authService.verifyEmail(email, verificationCode, newPassword, confirmNewPassword);
+            } else {
+                await authService.verifyEmail(email, verificationCode);
+            }
             setMessage('Успіх! Перенаправляємо...');
             // Після успіху і отримання куки перекидаємо на головну
             setTimeout(() => navigate(navigateTo), 1500); 
