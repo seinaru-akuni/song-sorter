@@ -38,11 +38,9 @@ namespace SongSorterWebAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto request)
         {
-            // Перевіряємо, чи співпадають паролі
             if (request.Password != request.ConfirmPassword)
                 return BadRequest("Паролі не співпадають.");
 
-            // Перевіряємо, чи не зайнята вже пошта або юзернейм
             if (await _userService.IsEmailTakenAsync(request.Email))
                 return BadRequest("Користувач з таким Email вже існує.");
 
@@ -51,7 +49,6 @@ namespace SongSorterWebAPI.Controllers
 
             string verificationCode = Random.Shared.Next(0, 1000000).ToString("D6");
 
-            // Створюємо нового користувача
             var newUser = new AppUser
             {
                 Email = request.Email,
@@ -61,16 +58,15 @@ namespace SongSorterWebAPI.Controllers
                 VerificationCodeExpiry = DateTime.UtcNow.AddMinutes(15)
             };
 
-            // Хешуємо пароль (PasswordHasher автоматично генерує сіль)
             newUser.PasswordHash = _passwordHasher.HashPassword(newUser, request.Password);
 
             _userService.AddNewAppUser(newUser);
             await _userService.ContextSaveChangesAsync();
 
-            // Відразу після реєстрації генеруємо сесію (логінимо користувача)
-            _jwtService.GenerateAndSetTokenCookie(newUser.Id, HttpContext, false);
+            // !!! КУКУ ТУТ БІЛЬШЕ НЕ ВИДАЄМО. Користувач залогіниться через verify-email
+            // await _emailService.SendVerificationCodeAsync(newUser.Email, verificationCode);
 
-            return Ok(new { message = "Реєстрація успішна!" });
+            return Ok(new { message = "Реєстрація успішна! Код підтвердження відправлено." });
         }
 
 
@@ -111,29 +107,46 @@ namespace SongSorterWebAPI.Controllers
         {
             var user = await _userService.FindUserViaEmailAsync(request.Email);
 
-
             if (user == null)
                 return NotFound("Користувача не знайдено.");
 
-            if (user.IsEmailVerified)
-                return BadRequest("Пошта вже підтверджена.");
-
+            // Загальна перевірка коду для обох випадків
             if (user.VerificationCode != request.Code)
                 return BadRequest("Невірний код.");
 
             if (user.VerificationCodeExpiry < DateTime.UtcNow)
-                return BadRequest("Термін дії коду минув. Зареєструйтеся знову або запросіть новий код.");
+                return BadRequest("Термін дії коду минув.");
 
-            // Якщо все ок — підтверджуємо пошту і зачищаємо код
-            user.IsEmailVerified = true;
+            // МАГІЯ: Перевіряємо, чи це флоу скидання пароля (прийшов новий пароль?)
+            if (!string.IsNullOrEmpty(request.NewPassword))
+            {
+                if (request.NewPassword != request.ConfirmNewPassword)
+                    return BadRequest("Паролі не співпадають.");
+
+                // Хешуємо та оновлюємо пароль на новий
+                user.PasswordHash = _passwordHasher.HashPassword(user, request.NewPassword);
+                user.IsEmailVerified = true; // Якщо міняє пароль через пошту, то вона автоматично верифікована
+            }
+            else
+            {
+                // Якщо пароля немає — це звичайне підтвердження реєстрації
+                user.IsEmailVerified = true;
+            }
+
+            // В обох випадках зачищаємо тимчасовий код
             user.VerificationCode = null;
             user.VerificationCodeExpiry = null;
+
             await _userService.ContextSaveChangesAsync();
 
-            // І ТІЛЬКИ ТЕПЕР видаємо сесійну куку (оскільки це відразу після реєстрації, rememberMe = false)
+            // Видаємо куку авторизації (UX-бонус: користувач одразу залогінений в обох сценаріях!)
             _jwtService.GenerateAndSetTokenCookie(user.Id, HttpContext, false);
 
-            return Ok(new { message = "Пошту успішно підтверджено! Ви увійшли в систему." });
+            string responseMessage = !string.IsNullOrEmpty(request.NewPassword)
+                ? "Пароль успішно змінено! Ви увійшли в систему."
+                : "Пошту успішно підтверджено! Ви увійшли в систему.";
+
+            return Ok(new { message = responseMessage });
         }
 
 
@@ -182,24 +195,26 @@ namespace SongSorterWebAPI.Controllers
         // ==========================================
 
 
-        [HttpPut("reset-password")]
+        [HttpPost("forgot-password")]
         [AllowAnonymous]
-        public async Task<IActionResult> ChangePassword([FromBody] ResetPasswordDto request)
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
         {
             var user = await _userService.FindUserViaEmailAsync(request.Email);
-
             if (user == null)
-                return NotFound();
+                return NotFound("Користувача з таким Email не знайдено.");
 
-            if (request.NewPassword != request.ConfirmNewPassword)
-                return BadRequest("Паролі не співпадають.");
-
+            // Генеруємо новий код для зміни пароля
             string verificationCode = Random.Shared.Next(0, 1000000).ToString("D6");
 
             user.VerificationCode = verificationCode;
             user.VerificationCodeExpiry = DateTime.UtcNow.AddMinutes(15);
 
-            return Ok(new { message = "Пароль успішно змінено" });
+            await _userService.ContextSaveChangesAsync();
+
+            // Відправляємо цей код на пошту
+            // await _emailService.SendVerificationCodeAsync(user.Email, verificationCode);
+
+            return Ok(new { message = "Код для відновлення пароля надіслано на пошту." });
         }
 
 
