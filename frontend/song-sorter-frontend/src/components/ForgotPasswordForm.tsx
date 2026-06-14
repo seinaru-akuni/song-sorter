@@ -3,15 +3,13 @@ import { authService } from '../services/authService'; // Перевір шля�
 import { Link, useNavigate } from 'react-router-dom';
 import EmailVerificationForm from './EmailVerificationForm';
 
-    function ChangePasswordForm() {
+    function ForgotPasswordForm() {
 
     const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
-    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    
     const [isAwaitingCode, setIsAwaitingCode] = useState(false);
 
     const [message, setMessage] = useState('');
@@ -24,8 +22,13 @@ import EmailVerificationForm from './EmailVerificationForm';
         setMessage('');
         setError('');
 
+        if (password !== confirmPassword) {
+            setError('Паролі не співпадають.');
+            return;
+        }
+
         try {
-            await authService.register({ email, username, password, confirmPassword });
+            await authService.forgotPassword(email);
             setIsAwaitingCode(true); // Перемикаємо UI на ввід коду
             setMessage('Код відправлено на вашу пошту!');
         } catch (err: any) {
@@ -47,7 +50,11 @@ import EmailVerificationForm from './EmailVerificationForm';
                     <button type="submit" className="mt-2 bg-custom-green text-white py-2 px-4 rounded-2xl hover:bg-green-700">Змінити пароль</button>
                 </form>
             ) : (
-                <EmailVerificationForm email={email} code={''} navigateTo="/" />
+                <EmailVerificationForm 
+                email={email} 
+                navigateTo="/" 
+                newPassword={password} 
+                confirmNewPassword={confirmPassword} />
             )}
             
             <Link to="/register" className="text-blue-500 hover:underline">
@@ -60,4 +67,4 @@ import EmailVerificationForm from './EmailVerificationForm';
     )};
 
     
-export default ChangePasswordForm;
+export default ForgotPasswordForm;
