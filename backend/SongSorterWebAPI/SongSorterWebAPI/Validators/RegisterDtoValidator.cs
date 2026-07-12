@@ -14,7 +14,8 @@ namespace SongSorterWebAPI.Validators
             RuleFor(x => x.Username)
                 .NotEmpty().WithMessage("Username є обов'язковим.")
                 .MinimumLength(3).WithMessage("Username має містити мінімум 3 символи.")
-                .MaximumLength(20).WithMessage("Username занадто довгий.");
+                .MaximumLength(20).WithMessage("Username занадто довгий.")
+                .Matches("^[a-zA-Z0-9_]*$").WithMessage("Username може містити лише латинські літери, цифри та символ '_'.");
 
             RuleFor(x => x.ConfirmPassword)
                 .Equal(x => x.Password).WithMessage("Паролі не співпадають.");

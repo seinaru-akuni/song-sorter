@@ -1,14 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SongSorterWebAPI.Data;
-using System.Security.Claims;
-
+using SongSorterWebAPI.DTOs;
 using SongSorterWebAPI.Models;
 using SongSorterWebAPI.Services;
-using SongSorterWebAPI.DTOs;
+using System.Security.Claims;
 
 namespace SongSorterWebAPI.Controllers
 {
@@ -36,13 +36,16 @@ namespace SongSorterWebAPI.Controllers
       
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto request)
+        public async Task<IActionResult> Register([FromBody] RegisterDto request, [FromServices] IValidator<RegisterDto> validator)
         {
-            if (request.Password.Length == 0 || request.ConfirmPassword.Length == 0 || request.Username.Length == 0 || request.Email.Length == 0)
-                return BadRequest(new { message = "Не всі поля заповнені" });
+            var validationResult = await validator.ValidateAsync(request);
 
-            if (request.Password != request.ConfirmPassword)
-                return BadRequest(new { message = "Паролі не співпадають" });
+            if (!validationResult.IsValid)
+            {
+                // Збираємо всі повідомлення про помилки в один масив
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+                return BadRequest(new { message = "Помилка валідації", errors });
+            }
 
             if (await _userService.IsEmailTakenAsync(request.Email) && await _userService.IsUserVerifiedAsync(request.Email))
                 return BadRequest(new { message = "Користувач з такою поштою вже існує" });
@@ -118,7 +121,7 @@ namespace SongSorterWebAPI.Controllers
 
 
         [HttpPost("verify-email")]
-        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto request)
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto request, [FromServices] IValidator<VerifyEmailDto> validator)
         {
             var user = await _userService.FindUserViaEmailAsync(request.Email);
 
@@ -132,6 +135,14 @@ namespace SongSorterWebAPI.Controllers
             if (user.VerificationCodeExpiry < DateTime.UtcNow)
                 return BadRequest(new { message = "Термін дії коду минув" });
 
+            var validationResult = await validator.ValidateAsync(request);
+
+            if (!validationResult.IsValid)
+            {
+                // Збираємо всі повідомлення про помилки в один масив
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+                return BadRequest(new { message = "Помилка валідації", errors });
+            }
             // Перевіряємо, чи це скидання пароля 
             if (!string.IsNullOrEmpty(request.NewPassword))
             {
