@@ -1,7 +1,9 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SongSorterWebAPI.Data;
+using SongSorterWebAPI.DTOs;
 using SongSorterWebAPI.Services;
 using System.Text;
 
@@ -53,6 +55,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddDataProtection();
+
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterDto>();
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
