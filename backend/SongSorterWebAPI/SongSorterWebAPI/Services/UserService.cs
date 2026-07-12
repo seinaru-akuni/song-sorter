@@ -47,5 +47,17 @@ namespace SongSorterWebAPI.Services
         {
             return _context.AppUsers.FirstOrDefault(u => u.Id == id);
         }
+
+        public async Task<bool> IsUserVerifiedAsync(string identifier)
+        {
+            var user = await _context.AppUsers
+                .FirstOrDefaultAsync(u => u.Email == identifier || u.Username == identifier);
+
+            if (user == null)
+            {
+                return false;
+            }
+            return user.IsEmailVerified;
+        }
     }
 }
