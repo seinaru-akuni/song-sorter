@@ -33,21 +33,36 @@ namespace SongSorterWebAPI.Controllers
         // ==========================================
         // 1. РЕЄСТРАЦІЯ
         // ==========================================
-
+      
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto request)
         {
+            if (request.Password.Length == 0 || request.ConfirmPassword.Length == 0 || request.Username.Length == 0 || request.Email.Length == 0)
+                return BadRequest(new { message = "Не всі поля заповнені" });
+
             if (request.Password != request.ConfirmPassword)
-                return BadRequest("Паролі не співпадають.");
+                return BadRequest(new { message = "Паролі не співпадають" });
 
-            if (await _userService.IsEmailTakenAsync(request.Email))
-                return BadRequest("Користувач з таким Email вже існує.");
+            if (await _userService.IsEmailTakenAsync(request.Email) && await _userService.IsUserVerifiedAsync(request.Email))
+                return BadRequest(new { message = "Користувач з такою поштою вже існує" });
 
-            if (await _userService.IsUsernameTakenAsync(request.Username))
-                return BadRequest("Цей Username вже зайнятий.");
+            if (await _userService.IsUsernameTakenAsync(request.Username) && await _userService.IsUserVerifiedAsync(request.Username))
+                return BadRequest(new { message = "Це ім'я користувача вже зайняте" });
 
             string verificationCode = Random.Shared.Next(0, 1000000).ToString("D6");
+            if (await _userService.IsEmailTakenAsync(request.Email) && !await _userService.IsUserVerifiedAsync(request.Email))
+            {
+                AppUser user = await _userService.FindUserViaEmailAsync(request.Email);
+                user.VerificationCode = verificationCode;
+                user.VerificationCodeExpiry = DateTime.UtcNow.AddMinutes(15);
+                user.IsEmailVerified = false;
+                user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+                await _userService.ContextSaveChangesAsync();
+
+                return Ok(new { message = "Реєстрація успішна! Код підтвердження відправлено." });
+     
+            }
 
             var newUser = new AppUser
             {
@@ -81,14 +96,14 @@ namespace SongSorterWebAPI.Controllers
             // Шукаємо користувача за Email
             var user = await _userService.FindUserViaEmailAsync(request.Email);
 
-            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
-                return Unauthorized("Невірний Email або пароль.");
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !user.IsEmailVerified)
+                return Unauthorized(new { message = "Не вірна пошта або пароль" });
 
             // Перевіряємо хеш пароля
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
             if (result == PasswordVerificationResult.Failed)
-                return Unauthorized("Невірний Email або пароль.");
+                return Unauthorized(new { message = "Не вірна пошта або пароль" });
 
             // Якщо пароль підходить, видаємо безпечну куку
             _jwtService.GenerateAndSetTokenCookie(user.Id, HttpContext, request.RememberMe);
@@ -108,20 +123,20 @@ namespace SongSorterWebAPI.Controllers
             var user = await _userService.FindUserViaEmailAsync(request.Email);
 
             if (user == null)
-                return NotFound("Користувача не знайдено.");
+                return NotFound(new { message = "Користувача не знайдено" });
 
             // Загальна перевірка коду для обох випадків
             if (user.VerificationCode != request.Code)
-                return BadRequest("Невірний код.");
+                return BadRequest(new { message = "Не вірний код" });
 
             if (user.VerificationCodeExpiry < DateTime.UtcNow)
-                return BadRequest("Термін дії коду минув.");
+                return BadRequest(new { message = "Термін дії коду минув" });
 
-            // МАГІЯ: Перевіряємо, чи це флоу скидання пароля (прийшов новий пароль?)
+            // Перевіряємо, чи це скидання пароля 
             if (!string.IsNullOrEmpty(request.NewPassword))
             {
                 if (request.NewPassword != request.ConfirmNewPassword)
-                    return BadRequest("Паролі не співпадають.");
+                    return BadRequest(new { message = "Паролі не співпадають" });
 
                 // Хешуємо та оновлюємо пароль на новий
                 user.PasswordHash = _passwordHasher.HashPassword(user, request.NewPassword);
@@ -129,7 +144,7 @@ namespace SongSorterWebAPI.Controllers
             }
             else
             {
-                // Якщо пароля немає — це звичайне підтвердження реєстрації
+                // Якщо пароля нема, то це звичайне підтвердження реєстрації
                 user.IsEmailVerified = true;
             }
 
@@ -139,7 +154,7 @@ namespace SongSorterWebAPI.Controllers
 
             await _userService.ContextSaveChangesAsync();
 
-            // Видаємо куку авторизації (UX-бонус: користувач одразу залогінений в обох сценаріях!)
+            // Видаємо куку авторизації
             _jwtService.GenerateAndSetTokenCookie(user.Id, HttpContext, false);
 
             string responseMessage = !string.IsNullOrEmpty(request.NewPassword)
