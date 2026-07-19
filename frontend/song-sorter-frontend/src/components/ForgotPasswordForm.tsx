@@ -22,11 +22,6 @@ import EmailVerificationForm from './EmailVerificationForm';
         setMessage('');
         setError('');
 
-        if (password !== confirmPassword) {
-            setError('Паролі не співпадають.');
-            return;
-        }
-
         try {
             await authService.forgotPassword(email);
             setIsAwaitingCode(true); // Перемикаємо UI на ввід коду

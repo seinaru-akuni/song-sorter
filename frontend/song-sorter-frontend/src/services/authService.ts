@@ -93,6 +93,19 @@ export const authService = {
         return response.json();
     },
 
+    getCurrentUser: async () => {
+        const response = await fetch(`${API_BASE_URL}/me`, {
+            method: 'GET',
+            credentials: 'include' // <--- Це змушує браузер прикріпити куку до запиту
+        });
+
+        if (!response.ok) {
+            return null; // Якщо 401 Unauthorized, значить куки немає або вона недійсна
+        }
+        
+        return response.json(); // Поверне { id, email, username }
+    },
+
     forgotPassword: async (email: string) => {
         const response = await fetch(`${API_BASE_URL}/forgot-password`, {
             method: 'POST',

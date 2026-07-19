@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { authService } from '../services/authService';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+
+    const { checkAuth } = useAuth();
+    const navigate = useNavigate();
     
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -17,7 +21,10 @@ function LoginForm() {
 
         try {
             const result = await authService.login({ email, password, rememberMe });
+            
             setMessage(result.message || 'Вхід успішний! Перевірте кукі.');
+            await checkAuth();
+            navigate('/');
         } catch (err: any) {
             setError(err.message);
         }

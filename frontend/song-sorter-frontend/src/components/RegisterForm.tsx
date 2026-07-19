@@ -48,7 +48,7 @@ import EmailVerificationForm from './EmailVerificationForm';
                     <button type="submit" className="mt-2 bg-custom-green text-white py-2 px-4 rounded-2xl hover:bg-green-700">Зареєструватися</button>
                 </form>
             ) : (
-                <EmailVerificationForm email={email} code={''} navigateTo="/" />
+                <EmailVerificationForm email={email} navigateTo="/" />
             )}
             <Link to="/login" className="text-blue-500 hover:underline">
                     Already have an account? Login here.

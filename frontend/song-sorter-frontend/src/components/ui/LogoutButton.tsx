@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService'; // Перевір шлях
+import { useAuth } from '../../contexts/AuthContext';
 
 export const LogoutButton = () => {
     const navigate = useNavigate();
+    const { checkAuth } = useAuth();
 
     const handleLogout = async () => {
         try {
@@ -14,6 +16,7 @@ export const LogoutButton = () => {
             // 2. Перенаправляємо користувача на сторінку логіну
             // (Або на головну '/', як тобі більше подобається)
             navigate('/login');
+            await checkAuth();
             
         } catch (error) {
             console.error('Помилка при виході:', error);
