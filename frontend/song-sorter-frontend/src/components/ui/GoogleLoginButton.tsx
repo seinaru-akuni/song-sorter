@@ -1,18 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
+import { useAuth } from '../../contexts/AuthContext';
 
 function GoogleLoginButton() {
 
     const [statusMessage, setStatusMessage] = useState<string>('');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+    const { user } = useAuth();
 
     useEffect(() => {
+    if (user) {
+        // Якщо користувач залогінений в апці, перевіряємо токен YouTube
         const savedToken = localStorage.getItem('youtube_access_token');
+        
         if (savedToken) {
             setIsLoggedIn(true);
             setStatusMessage('Ви успішно авторизовані (дані відновлено).');
+        } else {
+            // Якщо юзер є, але токена немає
+            setIsLoggedIn(false);
         }
-    }, [])
+    } else {
+        // Якщо користувача немає (вийшов з акаунта)
+        setIsLoggedIn(false);
+    }
+}, [user]);
 
 
     const login = useGoogleLogin({
@@ -26,13 +38,13 @@ function GoogleLoginButton() {
 
             // Ми більше не зберігаємо токен одразу, бо ми його ще не маємо!
             
-            fetch('https://localhost:7197/api/googleauth/callback', {
+            fetch('/api/googleauth/callback', { // <-- Використовуємо відносний шлях через Vite proxy
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // <-- ДОДАНО: обов'язково передаємо куку сесії
                 body: JSON.stringify({
-                    // Відправляємо саме authCode, як того чекає C# бекенд
                     authCode: codeResponse.code 
-                })
+                })  
             })
             .then(response => {
                 if (!response.ok) throw new Error('Помилка запиту до бекенду');

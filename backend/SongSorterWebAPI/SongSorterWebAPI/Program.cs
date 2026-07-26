@@ -62,6 +62,8 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ITokenProtectionService, TokenProtectionService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IContextService, ContextService>();
+builder.Services.AddScoped<ILinkedAccountService, LinckedAccountsService>();
 
 builder.Services.AddCors(options =>
 {

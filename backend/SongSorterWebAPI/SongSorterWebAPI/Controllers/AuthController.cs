@@ -19,15 +19,17 @@ namespace SongSorterWebAPI.Controllers
         private readonly IJwtService _jwtService;
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
+        private readonly IContextService _contextService;
 
         // Створюємо екземпляр хешера паролів
         private readonly PasswordHasher<AppUser> _passwordHasher = new();
 
-        public AuthController(IJwtService jwtService, IUserService userService, IEmailService emailService)
+        public AuthController(IJwtService jwtService, IUserService userService, IEmailService emailService, IContextService contextService)
         {
             _jwtService = jwtService;
             _userService = userService;
             _emailService = emailService;
+            _contextService = contextService;
         }
 
         // ==========================================
@@ -61,7 +63,7 @@ namespace SongSorterWebAPI.Controllers
                 user.VerificationCodeExpiry = DateTime.UtcNow.AddMinutes(15);
                 user.IsEmailVerified = false;
                 user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-                await _userService.ContextSaveChangesAsync();
+                await _contextService.ContextSaveChangesAsync();
 
                 return Ok(new { message = "Реєстрація успішна! Код підтвердження відправлено." });
      
@@ -79,7 +81,7 @@ namespace SongSorterWebAPI.Controllers
             newUser.PasswordHash = _passwordHasher.HashPassword(newUser, request.Password);
 
             _userService.AddNewAppUser(newUser);
-            await _userService.ContextSaveChangesAsync();
+            await _contextService.ContextSaveChangesAsync();
 
             // !!! КУКУ ТУТ БІЛЬШЕ НЕ ВИДАЄМО. Користувач залогіниться через verify-email
             // await _emailService.SendVerificationCodeAsync(newUser.Email, verificationCode);
@@ -163,7 +165,7 @@ namespace SongSorterWebAPI.Controllers
             user.VerificationCode = null;
             user.VerificationCodeExpiry = null;
 
-            await _userService.ContextSaveChangesAsync();
+            await _contextService.ContextSaveChangesAsync();
 
             // Видаємо куку авторизації
             _jwtService.GenerateAndSetTokenCookie(user.Id, HttpContext, false);
@@ -235,7 +237,7 @@ namespace SongSorterWebAPI.Controllers
             user.VerificationCode = verificationCode;
             user.VerificationCodeExpiry = DateTime.UtcNow.AddMinutes(15);
 
-            await _userService.ContextSaveChangesAsync();
+            await _contextService.ContextSaveChangesAsync();
 
             // Відправляємо цей код на пошту
             // await _emailService.SendVerificationCodeAsync(user.Email, verificationCode);

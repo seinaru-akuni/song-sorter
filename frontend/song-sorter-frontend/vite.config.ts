@@ -9,6 +9,11 @@ export default defineConfig({
     tailwindcss()
   ],
   server: {
+    
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
+    
     proxy: {
       // Усі запити, що починаються з /api, Vite буде перехоплювати...
       '/api': {
@@ -18,4 +23,5 @@ export default defineConfig({
       }
     }
   }
+  
 })

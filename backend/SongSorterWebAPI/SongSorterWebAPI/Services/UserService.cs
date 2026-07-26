@@ -33,10 +33,6 @@ namespace SongSorterWebAPI.Services
             _context.AppUsers.Add(newUser);
         }
 
-        public async Task<int> ContextSaveChangesAsync()
-        {
-            return await _context.SaveChangesAsync();
-        }
 
         public async Task<AppUser?> FindUserViaEmailAsync(string email)
         {
