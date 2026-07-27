@@ -1,49 +1,53 @@
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 
-function PlaylistsList() {
+interface PlaylistsListProps {
+    email: string;
+}
 
+function PlaylistsList({ email }: PlaylistsListProps) {
     const [playlists, setPlaylists] = useState<any[]>([]);
     const [statusMessage, setStatusMessage] = useState<string>('');
 
     useEffect(() => {
+        // Запускаємо fetchPlaylists щоразу, коли змінюється переданий email
         fetchPlaylists();
-    }, []);
+    }, [email]); 
 
     const fetchPlaylists = () => {
-        const sevedToken = localStorage.getItem('youtube_access_token');
-
-        if (!sevedToken) {
-            alert('Будь ласка, спочатку авторизуйтеся через Google!');
+        if (!email) {
+            setStatusMessage('Email не надано. Неможливо отримати плейлисти.');
             return;
         }
 
-        fetch('https://localhost:7197/api/playlists/my-playlists', {
+        // ФІКС: додано нижнє підкреслення "_" перед емейлом, щоб співпадало з ключем при збереженні
+        const savedToken = localStorage.getItem(`youtube_access_token_${email}`);
+
+        fetch('/api/playlists/my-playlists', { // Відносний шлях, якщо працюєш через Vite proxy
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${sevedToken}`
+                'Authorization': `Bearer ${savedToken}`
             }
         })
-        .then (response => {
+        .then(response => {
             if(!response.ok) throw new Error('Помилка при отриманні плейлистів');
             return response.json();
         })
-        .then (data => {
+        .then(data => {
             console.log('Отримані плейлисти:', data);
-            
             if(data.items){
                 setPlaylists(data.items);
                 setStatusMessage('Плейлисти успішно завантажені!');
             }
         })
-        .catch (error => {
+        .catch(error => {
             console.error(error);
             setStatusMessage('Не вдалося завантажити плейлисти');
         });
-
     }
 
     return (
         <div className='playlists-container'>
+            <p>{statusMessage}</p>
             {playlists.length > 0 && (
                 <ul style={{ textAlign: 'left', marginTop: '20px' }}>
                     {playlists.map((pl: any) => (
@@ -52,7 +56,7 @@ function PlaylistsList() {
                 </ul>
             )}
         </div>
-        );
+    );
 }
 
 export default PlaylistsList;

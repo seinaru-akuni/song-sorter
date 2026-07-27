@@ -7,24 +7,25 @@ function GoogleLoginButton() {
     const [statusMessage, setStatusMessage] = useState<string>('');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const { user } = useAuth();
+    
 
-    useEffect(() => {
-    if (user) {
-        // Якщо користувач залогінений в апці, перевіряємо токен YouTube
-        const savedToken = localStorage.getItem('youtube_access_token');
+//     useEffect(() => {
+//     if (user) {
+//         // Якщо користувач залогінений в апці, перевіряємо токен YouTube
+//         const savedToken = localStorage.getItem('youtube_access_token');
         
-        if (savedToken) {
-            setIsLoggedIn(true);
-            setStatusMessage('Ви успішно авторизовані (дані відновлено).');
-        } else {
-            // Якщо юзер є, але токена немає
-            setIsLoggedIn(false);
-        }
-    } else {
-        // Якщо користувача немає (вийшов з акаунта)
-        setIsLoggedIn(false);
-    }
-}, [user]);
+//         if (savedToken) {
+//             setIsLoggedIn(true);
+//             setStatusMessage('Ви успішно авторизовані (дані відновлено).');
+//         } else {
+//             // Якщо юзер є, але токена немає
+//             setIsLoggedIn(false);
+//         }
+//     } else {
+//         // Якщо користувача немає (вийшов з акаунта)
+//         setIsLoggedIn(false);
+//     }
+// }, [user]);
 
 
     const login = useGoogleLogin({
@@ -51,9 +52,12 @@ function GoogleLoginButton() {
                 return response.json();
             })
             .then(data => {
+                console.log("Відповідь бекенду:", data.google_email, data.access_token);
                 // 3. Тепер БЕКЕНД повернув нам access_token. 
                 // Ось тут ми його і зберігаємо в пам'ять браузера:
-                localStorage.setItem('youtube_access_token', data.access_token);
+                const googleEmail = data.google_email;
+
+                localStorage.setItem(`youtube_access_token_${googleEmail}`, data.access_token);
                 
                 setIsLoggedIn(true);
                 setStatusMessage('Авторизація повністю успішна!');
@@ -88,9 +92,27 @@ function GoogleLoginButton() {
                     Увійти через Google
                 </button>
             ) : (
+                <div>
+                    <button 
+                    onClick={() => login()} 
+                    style={{
+                        padding: '10px 20px', 
+                        fontSize: '16px', 
+                        cursor: 'pointer',
+                        backgroundColor: '#4285F4',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontWeight: 'bold'
+                    }}
+                >
+                    Увійти через Google
+                </button>
                 <p style={{ margin: 0, fontWeight: 'bold', color: '#555' }}>
                     {statusMessage}
                 </p>
+                </div>
+                
             )}
         </div>
     );

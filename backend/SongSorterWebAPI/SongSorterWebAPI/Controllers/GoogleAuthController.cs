@@ -75,7 +75,7 @@ namespace SongSorterWebAPI.Controllers
             // Перевіряємо, чи цей Google-акаунт ВЖЕ існує в нашій базі
             var existingLinkedAccount = await _context.LinkedAccounts
                 .FirstOrDefaultAsync(la => la.ProviderName == "Google" && la.ProviderAccountId == googleId);
-
+            var accessToken = tokenData.GetProperty("access_token").GetString();
             if (existingLinkedAccount != null)
             {
                 // Якщо він є, але прив'язаний до ІНШОГО користувача додатка
@@ -92,7 +92,13 @@ namespace SongSorterWebAPI.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                return Content(responseString, "application/json");
+                
+
+                return Ok(new
+                {
+                    access_token = accessToken,
+                    google_email = googleEmail
+                });
             }
 
             // 5. Якщо такого Google-акаунта ще немає в базі — створюємо зв'язок
@@ -113,7 +119,13 @@ namespace SongSorterWebAPI.Controllers
             await _context.SaveChangesAsync();
 
             // Віддаємо React-у відповідь з токенами
-            return Content(responseString, "application/json");
+            
+
+            return Ok(new
+            {
+                access_token = accessToken,
+                google_email = googleEmail
+            });
         }
 
         public class AuthCodeDto { public required string AuthCode { get; set; } }
