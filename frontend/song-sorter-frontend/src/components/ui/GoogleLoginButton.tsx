@@ -57,7 +57,7 @@ function GoogleLoginButton() {
                 // Ось тут ми його і зберігаємо в пам'ять браузера:
                 const googleEmail = data.google_email;
 
-                localStorage.setItem(`youtube_access_token_${googleEmail}`, data.access_token);
+                //localStorage.setItem(data.access_token);
                 
                 setIsLoggedIn(true);
                 setStatusMessage('Авторизація повністю успішна!');

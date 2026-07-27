@@ -39,10 +39,10 @@ export const LinkedAccounts: React.FC = () => {
     }
 
     const handleClick = (email: string) => {
-        // Перевіряємо токен і передаємо емейл наверх у HomePage
-        if(localStorage.getItem(`youtube_access_token_${email}`) !== null) {
-            setSelectedEmail(email);
-        }
+        
+        
+        setSelectedEmail(email);
+        
     }
 
     return (
@@ -56,7 +56,6 @@ export const LinkedAccounts: React.FC = () => {
                         <LinkedAccountCard
                             providerName={account.providerName}
                             email={account.email}
-                            isLoggedIn={localStorage.getItem(`youtube_access_token_${account.email}`) !== null}
                         />
                     </div>
                 ))

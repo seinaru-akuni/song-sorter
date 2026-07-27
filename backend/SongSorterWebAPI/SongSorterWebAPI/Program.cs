@@ -55,7 +55,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddDataProtection();
-
+builder.Services.AddMemoryCache();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterDto>();
 
 builder.Services.AddScoped<IEmailService, EmailService>();

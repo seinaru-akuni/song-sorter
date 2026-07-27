@@ -3,13 +3,11 @@ import React from "react";
 interface LinkedAccountCardProps {
     providerName: string;
     email: string;
-    isLoggedIn: boolean;
     }
 
     export const LinkedAccountCard: React.FC<LinkedAccountCardProps> = ({
     providerName,
-    email,
-    isLoggedIn
+    email
     }) => {
 
 
@@ -19,9 +17,6 @@ interface LinkedAccountCardProps {
             <div style={{ marginBottom: 8, fontSize: 14, color: "#888" }}>Linked Account</div>
             <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{email}</div>
             <div style={{ fontSize: 14, color: "#555" }}>{providerName}</div>
-            <div style={{ marginTop: 12, fontSize: 14, color: isLoggedIn ? "green" : "red" }}>
-                {isLoggedIn ? "Пов'язано" : "Не пов'язано"}
-            </div>
         </div>
         
         

@@ -22,11 +22,10 @@ function PlaylistsList({ email }: PlaylistsListProps) {
         // ФІКС: додано нижнє підкреслення "_" перед емейлом, щоб співпадало з ключем при збереженні
         const savedToken = localStorage.getItem(`youtube_access_token_${email}`);
 
-        fetch('/api/playlists/my-playlists', { // Відносний шлях, якщо працюєш через Vite proxy
+        fetch(`/api/playlists/my-playlists?email=${encodeURIComponent(email)}`, {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${savedToken}`
-            }
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include' // Залишаємо це, щоб передавалася кука сесії твого додатку
         })
         .then(response => {
             if(!response.ok) throw new Error('Помилка при отриманні плейлистів');
