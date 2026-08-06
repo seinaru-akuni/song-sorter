@@ -46,7 +46,7 @@ export const LinkedAccounts: React.FC = () => {
     }
 
     return (
-        <div>
+        <div className="justify-center flex flex-col">
             {linkedAccounts.length === 0 ? (
                 <p>У вас ще немає прив'язаних акаунтів.</p>
             ) : (

@@ -97,6 +97,8 @@ namespace SongSorterWebAPI.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
+                var errorDetail = await response.Content.ReadAsStringAsync();
+                Console.WriteLine(errorDetail);
                 return StatusCode((int)response.StatusCode, "Помилка при зверненні до YouTube API");
             }
 

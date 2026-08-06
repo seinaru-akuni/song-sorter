@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react';
 
+interface PlaylistSnippet {
+    title: string;
+    // Сюди можна буде додати description, thumbnails тощо, якщо знадобиться
+}
+
+interface YouTubePlaylist {
+    id: string;
+    snippet: PlaylistSnippet;
+}
+
 interface PlaylistsListProps {
     email: string;
 }
 
 function PlaylistsList({ email }: PlaylistsListProps) {
-    const [playlists, setPlaylists] = useState<any[]>([]);
+    const [playlists, setPlaylists] = useState<YouTubePlaylist[]>([]);
     const [statusMessage, setStatusMessage] = useState<string>('');
 
     useEffect(() => {
@@ -18,9 +28,6 @@ function PlaylistsList({ email }: PlaylistsListProps) {
             setStatusMessage('Email не надано. Неможливо отримати плейлисти.');
             return;
         }
-
-        // ФІКС: додано нижнє підкреслення "_" перед емейлом, щоб співпадало з ключем при збереженні
-        const savedToken = localStorage.getItem(`youtube_access_token_${email}`);
 
         fetch(`/api/playlists/my-playlists?email=${encodeURIComponent(email)}`, {
             method: 'GET',
@@ -45,11 +52,11 @@ function PlaylistsList({ email }: PlaylistsListProps) {
     }
 
     return (
-        <div className='playlists-container'>
+        <div className='flex flex-col justify-center w-full'>
             <p>{statusMessage}</p>
             {playlists.length > 0 && (
                 <ul style={{ textAlign: 'left', marginTop: '20px' }}>
-                    {playlists.map((pl: any) => (
+                    {playlists.map((pl: YouTubePlaylist) => (
                         <li key={pl.id}>{pl.snippet.title}</li>
                     ))}
                 </ul>
