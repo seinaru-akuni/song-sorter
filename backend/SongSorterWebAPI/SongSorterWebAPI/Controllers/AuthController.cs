@@ -9,6 +9,7 @@ using SongSorterWebAPI.DTOs;
 using SongSorterWebAPI.Models;
 using SongSorterWebAPI.Services;
 using System.Security.Claims;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SongSorterWebAPI.Controllers
 {
@@ -132,10 +133,17 @@ namespace SongSorterWebAPI.Controllers
 
             // Загальна перевірка коду для обох випадків
             if (user.VerificationCode != request.Code)
+            {
+                Console.WriteLine("Не вірний код");
                 return BadRequest(new { message = "Не вірний код" });
+            }
+                
 
             if (user.VerificationCodeExpiry < DateTime.UtcNow)
+            {
+                Console.WriteLine("Термін дії коду минув");
                 return BadRequest(new { message = "Термін дії коду минув" });
+            }
 
             var validationResult = await validator.ValidateAsync(request);
 
@@ -143,6 +151,8 @@ namespace SongSorterWebAPI.Controllers
             {
                 // Збираємо всі повідомлення про помилки в один масив
                 var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+
+                Console.WriteLine($"Помилки валідації: {string.Join(", ", errors)}");
                 return BadRequest(new { message = "Помилка валідації", errors });
             }
             // Перевіряємо, чи це скидання пароля 
