@@ -3,6 +3,8 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+backend/SongSorterWebAPI/SongSorterWebAPI/Migrations
+
 # dotenv files
 .env
 
