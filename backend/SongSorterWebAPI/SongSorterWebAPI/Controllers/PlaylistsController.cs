@@ -139,7 +139,7 @@ namespace SongSorterWebAPI.Controllers
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var youtubeApiUrl = "https://www.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50";
+            var youtubeApiUrl = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&mine=true&maxResults=50";
             return await httpClient.GetAsync(youtubeApiUrl);
         }
 
