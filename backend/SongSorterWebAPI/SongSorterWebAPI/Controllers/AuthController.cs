@@ -36,7 +36,7 @@ namespace SongSorterWebAPI.Controllers
         // ==========================================
         // 1. РЕЄСТРАЦІЯ
         // ==========================================
-      
+
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto request, [FromServices] IValidator<RegisterDto> validator)
@@ -67,7 +67,7 @@ namespace SongSorterWebAPI.Controllers
                 await _contextService.ContextSaveChangesAsync();
 
                 return Ok(new { message = "Реєстрація успішна! Код підтвердження відправлено." });
-     
+
             }
 
             var newUser = new AppUser
@@ -137,7 +137,7 @@ namespace SongSorterWebAPI.Controllers
                 Console.WriteLine("Не вірний код");
                 return BadRequest(new { message = "Не вірний код" });
             }
-                
+
 
             if (user.VerificationCodeExpiry < DateTime.UtcNow)
             {
@@ -145,19 +145,21 @@ namespace SongSorterWebAPI.Controllers
                 return BadRequest(new { message = "Термін дії коду минув" });
             }
 
-            var validationResult = await validator.ValidateAsync(request);
 
-            if (!validationResult.IsValid)
-            {
-                // Збираємо всі повідомлення про помилки в один масив
-                var errors = validationResult.Errors.Select(e => e.ErrorMessage);
-
-                Console.WriteLine($"Помилки валідації: {string.Join(", ", errors)}");
-                return BadRequest(new { message = "Помилка валідації", errors });
-            }
             // Перевіряємо, чи це скидання пароля 
             if (!string.IsNullOrEmpty(request.NewPassword))
             {
+                var validationResult = await validator.ValidateAsync(request);
+
+                if (!validationResult.IsValid)
+                {
+                    // Збираємо всі повідомлення про помилки в один масив
+                    var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+
+                    Console.WriteLine($"Помилки валідації: {string.Join(", ", errors)}");
+                    return BadRequest(new { message = "Помилка валідації", errors });
+                }
+
                 if (request.NewPassword != request.ConfirmNewPassword)
                     return BadRequest(new { message = "Паролі не співпадають" });
 
