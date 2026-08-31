@@ -9,15 +9,10 @@ interface LinkedAccountDto {
     email: string;
 }
 
-// Додаємо інтерфейс для пропсів
-
-
 export const LinkedAccounts: React.FC = () => {
     const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccountDto[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true); 
     const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
-
-    // Видаляємо локальний clickedEmail, він тут більше не потрібен
 
     useEffect(() => {
         const fetchAccounts = async () => {
@@ -39,10 +34,12 @@ export const LinkedAccounts: React.FC = () => {
     }
 
     const handleClick = (email: string) => {
-        
-        
         setSelectedEmail(email);
-        
+    }
+
+    // Додаємо функцію для закриття модалки
+    const closeModal = () => {
+        setSelectedEmail(null);
     }
 
     return (
@@ -51,7 +48,6 @@ export const LinkedAccounts: React.FC = () => {
                 <p>У вас ще немає прив'язаних акаунтів.</p>
             ) : (
                 linkedAccounts.map((account) => (
-                    // Краще передавати email напряму у функцію, ніж читати з data-атрибута
                     <div key={account.id} onClick={() => handleClick(account.email)}>
                         <LinkedAccountCard
                             providerName={account.providerName}
@@ -61,8 +57,13 @@ export const LinkedAccounts: React.FC = () => {
                 ))
             )}
 
-            {selectedEmail && <PlaylistsList email={selectedEmail} />}
+            {/* Передаємо closeModal через пропс onClose */}
+            {selectedEmail && (
+                <PlaylistsList 
+                    email={selectedEmail} 
+                    onClose={closeModal} 
+                />
+            )}
         </div>
-        
     );
 };
