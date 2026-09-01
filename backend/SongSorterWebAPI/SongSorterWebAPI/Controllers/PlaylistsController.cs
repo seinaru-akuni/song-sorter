@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory; // <--- ДОДАНО ДЛЯ КЕШУВАННЯ
@@ -14,21 +15,16 @@ namespace SongSorterWebAPI.Controllers
     [ApiController]
     public class PlaylistsController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly ITokenProtectionService _tokenProtection;
-        private readonly IConfiguration _configuration;
-        private readonly IMemoryCache _cache; // <--- ДОДАНО
+        
+        private readonly IMemoryCache _cache; 
+        private readonly IYtPlaylistsService _ytPlaylists; 
+        private readonly IGoogleAccessTokenService _googleAccessToken;
 
-        public PlaylistsController(
-            AppDbContext context,
-            ITokenProtectionService tokenProtection,
-            IConfiguration configuration,
-            IMemoryCache cache) // <--- ДОДАНО В ІНЖЕКЦІЮ
+        public PlaylistsController(IMemoryCache cache, IYtPlaylistsService ytPlaylists, IGoogleAccessTokenService googleAccessToken) 
         {
-            _context = context;
-            _tokenProtection = tokenProtection;
-            _configuration = configuration;
-            _cache = cache; // <--- ДОДАНО
+            _cache = cache;
+            _ytPlaylists = ytPlaylists;
+            _googleAccessToken = googleAccessToken;
         }
 
         [HttpGet("my-playlists")]
@@ -51,7 +47,7 @@ namespace SongSorterWebAPI.Controllers
 
 
             // 2. Перевіряємо, чи є вже живий Access Token у кеші
-            string? accessToken = await GetOrRefreshAccessTokenAsync(currentAppUserId, email, cacheKey);
+            string? accessToken = await _googleAccessToken.GetOrRefreshAccessTokenAsync(currentAppUserId, email, cacheKey);
 
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -68,7 +64,7 @@ namespace SongSorterWebAPI.Controllers
                 _cache.Remove(cacheKey); // Очищаємо неробочий токен з кешу
 
                 // Пробуємо отримати свіжий токен в обхід кешу
-                accessToken = await GetOrRefreshAccessTokenAsync(currentAppUserId, email, cacheKey, forceRefresh: true);
+                accessToken = await _googleAccessToken.GetOrRefreshAccessTokenAsync(currentAppUserId, email, cacheKey, forceRefresh: true);
 
                 if (string.IsNullOrEmpty(accessToken))
                 {
@@ -92,47 +88,45 @@ namespace SongSorterWebAPI.Controllers
                 return StatusCode((int)response.StatusCode, new { message = "Помилка при зверненні до YouTube API", details = errorDetail });
             }
 
+
             var content = await response.Content.ReadAsStringAsync();
-            var json = JsonSerializer.Deserialize<object>(content);
 
-            return Ok(json);
+            // Парсимо JSON як вузол, щоб його можна було редагувати
+            var jsonObject = JsonNode.Parse(content)?.AsObject();
+            var itemsArray = jsonObject?["items"]?.AsArray();
+
+            if (itemsArray != null)
+            {
+                // 1. Шукаємо ID плейлиста "Сподобалося"
+                var likedPlaylistId = await _ytPlaylists.GetLikedVideosPlaylistIdAsync(accessToken);
+
+                if (!string.IsNullOrEmpty(likedPlaylistId))
+                {
+                    // 2. Запитуємо деталі цього плейлиста
+                    var likedPlaylistResponse = await _ytPlaylists.GetPlaylistByIdAsync(accessToken, likedPlaylistId);
+
+                    if (likedPlaylistResponse.IsSuccessStatusCode)
+                    {
+                        var likedContent = await likedPlaylistResponse.Content.ReadAsStringAsync();
+                        var likedJson = JsonNode.Parse(likedContent);
+                        var likedItems = likedJson?["items"]?.AsArray();
+
+                        // 3. Якщо отримали дані, додаємо плейлист "Сподобалося" на початок списку
+                        if (likedItems != null && likedItems.Count > 0)
+                        {
+                            // Клонуємо об'єкт (перетворюємо в строку і назад), щоб безпечно вставити його в інший масив
+                            var likedItemNode = JsonNode.Parse(likedItems[0]!.ToJsonString());
+                            itemsArray.Insert(0, likedItemNode);
+                        }
+                    }
+                }
+            }
+
+            // Повертаємо оновлений об'єкт, який тепер містить і "Сподобалося", і власні плейлисти
+            return Ok(jsonObject);
         }
 
-        private async Task<string?> GetOrRefreshAccessTokenAsync(int userId, string email, string cacheKey, bool forceRefresh = false)
-        {
-            // Якщо ми не вимагаємо примусового оновлення, шукаємо в кеші
-            if (!forceRefresh && _cache.TryGetValue(cacheKey, out string? cachedToken))
-            {
-                return cachedToken;
-            }
-
-            // Йдемо в базу за Refresh Token
-            var linkedAccount = await _context.LinkedAccounts
-                .FirstOrDefaultAsync(la => la.AppUserId == userId
-                                        && la.ProviderName == "Google"
-                                        && la.Email == email);
-
-            if (linkedAccount == null || string.IsNullOrEmpty(linkedAccount.RefreshToken))
-            {
-                return null;
-            }
-
-            var refreshToken = _tokenProtection.DecryptToken(linkedAccount.RefreshToken);
-
-            // Отримуємо новий токен від Google
-            var newAccessToken = await RefreshGoogleAccessToken(refreshToken);
-
-            if (!string.IsNullOrEmpty(newAccessToken))
-            {
-                // Зберігаємо отриманий токен у кеш на 50 хвилин
-                var cacheOptions = new MemoryCacheEntryOptions()
-                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(50));
-
-                _cache.Set(cacheKey, newAccessToken, cacheOptions);
-            }
-
-            return newAccessToken;
-        }
+        
 
         private async Task<HttpResponseMessage> CallYouTubeApiAsync(string accessToken)
         {
@@ -143,25 +137,10 @@ namespace SongSorterWebAPI.Controllers
             return await httpClient.GetAsync(youtubeApiUrl);
         }
 
-        private async Task<string?> RefreshGoogleAccessToken(string refreshToken)
-        {
-            var values = new Dictionary<string, string>
-            {
-                { "client_id", _configuration["Authentication:Google:ClientId"]! },
-                { "client_secret", _configuration["Authentication:Google:ClientSecret"]! },
-                { "refresh_token", refreshToken },
-                { "grant_type", "refresh_token" }
-            };
+        
 
-            using var client = new HttpClient();
-            var response = await client.PostAsync("https://oauth2.googleapis.com/token", new FormUrlEncodedContent(values));
+        
 
-            if (!response.IsSuccessStatusCode) return null;
-
-            var responseString = await response.Content.ReadAsStringAsync();
-            var tokenData = JsonSerializer.Deserialize<JsonElement>(responseString);
-
-            return tokenData.GetProperty("access_token").GetString();
-        }
+        
     }
 }
