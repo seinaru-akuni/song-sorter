@@ -68,12 +68,12 @@ function PlaylistsList({ email, onClose }: PlaylistsListProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="relative w-full max-w-xl bg-white dark:bg-main-dark rounded-xl shadow-2xl overflow-hidden flex flex-col dark:text-white">
                 
                 {/* Кнопка-хрестик тепер викликає функцію onClose від батька */}
                 <button 
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+                    className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors focus:outline-none dark:text-white"
                     aria-label="Закрити"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -82,7 +82,7 @@ function PlaylistsList({ email, onClose }: PlaylistsListProps) {
                 </button>
 
                 <div className="p-6 pb-4 border-b border-gray-100">
-                    <h2 className="text-xl font-bold text-gray-800 mb-2">Ваші плейлисти</h2>
+                    <h2 className="text-xl font-bold text-gray-800 mb-2 dark:text-white">Ваші плейлисти</h2>
                     <p className="bg-custom-green text-sm px-3 py-1 rounded-md inline-block">
                         {statusMessage}
                     </p>
@@ -90,14 +90,20 @@ function PlaylistsList({ email, onClose }: PlaylistsListProps) {
 
                 <div className="p-6 overflow-y-auto max-h-[60vh]">
                     {playlists.length > 0 ? (
-                        <ul className="space-y-2">
+                        // 1. Додаємо flex, flex-wrap, justify-center та gap
+                        <ul className="flex flex-wrap justify-center gap-6">
                             {playlists.map((pl: YouTubePlaylist) => (
                                 <li 
                                     key={pl.id} 
-                                    className="px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all text-gray-700 font-medium"
+                                    // 2. Бажано задати ширину картки (наприклад, w-48 або w-56), 
+                                    // щоб вони мали однаковий розмір і красиво переносилися
+                                    className='w-48 sm:w-56'
                                 >
-                                    <PlaylistCard title={pl.snippet.title} publishedAt={pl.snippet.publishedAt} thumbnails={pl.snippet.thumbnails}></PlaylistCard>
-                                    
+                                    <PlaylistCard 
+                                        title={pl.snippet.title} 
+                                        publishedAt={pl.snippet.publishedAt} 
+                                        thumbnails={pl.snippet.thumbnails}
+                                    />
                                 </li>
                             ))}
                         </ul>
