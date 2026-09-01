@@ -64,6 +64,8 @@ builder.Services.AddScoped<ITokenProtectionService, TokenProtectionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IContextService, ContextService>();
 builder.Services.AddScoped<ILinkedAccountService, LinckedAccountsService>();
+builder.Services.AddScoped<IYtPlaylistsService, YtPlayListsService>();
+builder.Services.AddScoped<IGoogleAccessTokenService, GoogleAccessTokenService>();
 
 builder.Services.AddCors(options =>
 {
